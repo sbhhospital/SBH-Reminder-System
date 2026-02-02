@@ -13,6 +13,42 @@ const PatientDataPage = () => {
 
     const APPSCRIPT_URL = import.meta.env.VITE_APPSCRIPT_URL;
 
+    const getDisplayableImageUrl = (url) => {
+        if (!url) return null;
+
+        try {
+            const directMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (directMatch && directMatch[1]) {
+                return `https://drive.google.com/thumbnail?id=${directMatch[1]}&sz=w400`;
+            }
+
+            const ucMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (ucMatch && ucMatch[1]) {
+                return `https://drive.google.com/thumbnail?id=${ucMatch[1]}&sz=w400`;
+            }
+
+            const openMatch = url.match(/open\?id=([a-zA-Z0-9_-]+)/);
+            if (openMatch && openMatch[1]) {
+                return `https://drive.google.com/thumbnail?id=${openMatch[1]}&sz=w400`;
+            }
+
+            if (url.includes("thumbnail?id=")) {
+                return url;
+            }
+
+            const anyIdMatch = url.match(/([a-zA-Z0-9_-]{25,})/);
+            if (anyIdMatch && anyIdMatch[1]) {
+                return `https://drive.google.com/thumbnail?id=${anyIdMatch[1]}&sz=w400`;
+            }
+
+            const cacheBuster = Date.now();
+            return url.includes("?") ? `${url}&cb=${cacheBuster}` : `${url}?cb=${cacheBuster}`;
+        } catch (e) {
+            console.error("Error processing image URL:", url, e);
+            return url; // Return original URL as fallback
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -32,7 +68,7 @@ const PatientDataPage = () => {
                     mother: row[2],      // Index 2 - Column C
                     dob: row[3] ? new Date(row[3]).toLocaleDateString() : 'N/A', // Index 3 - Column D
                     mobile: row[4],    // Index 4 - Column E
-                    image: row[5],      // Index 5 - Column F
+                    image: getDisplayableImageUrl(row[5]), // Index 5 - Column F
                     sent: row[6],      // Index 6 - Column G
                 })).filter(item => item.father);
 
