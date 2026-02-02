@@ -11,6 +11,7 @@ const PatientDataPage = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [viewImage, setViewImage] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSharing, setIsSharing] = useState(false);
 
     const APPSCRIPT_URL = import.meta.env.VITE_APPSCRIPT_URL;
 
@@ -68,9 +69,10 @@ const PatientDataPage = () => {
                     father: row[1],      // Index 1 - Column B
                     mother: row[2],      // Index 2 - Column C
                     dob: row[3] ? new Date(row[3]).toLocaleDateString() : 'N/A', // Index 3 - Column D
-                    mobile: row[4],    // Index 4 - Column E
-                    image: getDisplayableImageUrl(row[5]), // Index 5 - Column F
-                    sent: row[6],      // Index 6 - Column G
+                    baby: row[4],    // Index 4 - Column E
+                    mobile: row[5],    // Index 5 - Column F
+                    image: getDisplayableImageUrl(row[6]), // Index 6 - Column G
+                    sent: row[7],      // Index 7 - Column H
                 })).filter(item => item.father);
 
                 setData(formattedData);
@@ -82,6 +84,46 @@ const PatientDataPage = () => {
             setError("Failed to load patient data. Please try again.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSharePatient = async () => {
+        if (!selectedPatient) return;
+
+        setIsSharing(true);
+        try {
+            // Row calculation: Header (1) + Index (0-based) + 1 = Index + 2
+            const rowIndex = selectedPatient.id + 2;
+
+            const params = new URLSearchParams();
+            params.append('action', 'updateCell');
+            params.append('sheetName', 'Data');
+            params.append('rowIndex', rowIndex);
+            params.append('columnIndex', 8); // Column H is index 8 (A=1...H=8)
+            params.append('value', 'Yes');
+
+            const response = await fetch(APPSCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                await fetchData(); // Refresh data to show "Yes"
+                setSelectedPatient(null); // Close modal
+            } else {
+                alert("Failed to update status: " + result.error);
+            }
+
+        } catch (err) {
+            console.error("Error sharing patient:", err);
+            alert("Failed to share patient. Please try again.");
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -150,6 +192,7 @@ const PatientDataPage = () => {
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Father Name</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Mother Name</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Date of Birth</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Baby</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Mobile Number</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Image</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Sent</th>
@@ -170,6 +213,9 @@ const PatientDataPage = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-slate-500">
                                                     {patient.dob}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-slate-500">
+                                                    {patient.baby}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-slate-500">
                                                     {patient.mobile}
@@ -224,7 +270,9 @@ const PatientDataPage = () => {
                 <ShareModal
                     isOpen={!!selectedPatient}
                     onClose={() => setSelectedPatient(null)}
+                    onShare={handleSharePatient}
                     data={selectedPatient}
+                    isSharing={isSharing}
                 />
 
                 <AddPatientModal
@@ -246,7 +294,7 @@ const PatientDataPage = () => {
                             <X size={24} />
                         </button>
                         <img
-                            src={viewImage.replace('&sz=w400', '&sz=s0')}
+                            src={viewImage.replace('&sz=w400', '&sz=s0')} // Use original size/high res
                             alt="Full View"
                             className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
                             onClick={(e) => e.stopPropagation()}

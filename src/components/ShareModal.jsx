@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, Calendar, Phone, User } from 'lucide-react';
+import { X, Calendar, Phone, User, Share2, Loader } from 'lucide-react';
 
-const ShareModal = ({ isOpen, onClose, data }) => {
+const ShareModal = ({ isOpen, onClose, onShare, data, isSharing }) => {
     if (!isOpen || !data) return null;
 
     return (
@@ -14,12 +14,12 @@ const ShareModal = ({ isOpen, onClose, data }) => {
                 <div className="relative h-48 w-full bg-emerald-50">
                     {data.image ? (
                         <img
-                            src={data.image}
-                            alt={data.name}
+                            src={data.image.replace('&sz=w400', '&sz=w800')} // Use higher res for header if available
+                            alt={data.father}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(data.name) + '&background=random';
+                                e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(data.father) + '&background=random';
                             }}
                         />
                     ) : (
@@ -38,37 +38,80 @@ const ShareModal = ({ isOpen, onClose, data }) => {
 
                 {/* Content */}
                 <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-1 text-slate-800">{data.name}</h2>
-                    <p className="text-slate-500 text-sm mb-6">Patient Details</p>
+                    <h2 className="text-2xl font-bold mb-1 text-slate-800">Baby {data.baby}</h2>
+                    <p className="text-emerald-600 font-medium text-sm mb-6">New Arrival</p>
 
                     <div className="space-y-4">
-                        <div className="flex items-center gap-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                        {/* Father Name */}
+                        <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
                             <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
-                                <Calendar size={20} />
+                                <User size={18} />
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Date of Birth</p>
-                                <p className="font-semibold text-slate-700">{data.dob || 'N/A'}</p>
+                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Father Name</p>
+                                <p className="font-semibold text-slate-700">{data.father}</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                        {/* Mother Name */}
+                        <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
                             <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
-                                <Phone size={20} />
+                                <User size={18} />
                             </div>
                             <div>
-                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Mobile Number</p>
-                                <p className="font-semibold text-slate-700">{data.mobile || 'N/A'}</p>
+                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Mother Name</p>
+                                <p className="font-semibold text-slate-700">{data.mother || 'N/A'}</p>
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
+                                    <Calendar size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">DOB</p>
+                                    <p className="font-semibold text-slate-700">{data.dob || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-600">
+                                    <Phone size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Mobile</p>
+                                    <p className="font-semibold text-slate-700">{data.mobile || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                    <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end gap-3">
                         <button
                             onClick={onClose}
-                            className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors shadow-emerald-200 shadow-lg"
+                            disabled={isSharing}
+                            className="px-6 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition-colors border border-transparent hover:border-slate-200"
                         >
-                            Close
+                            Cancel
+                        </button>
+                        <button
+                            onClick={onShare}
+                            disabled={isSharing}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors shadow-emerald-200 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isSharing ? (
+                                <>
+                                    <Loader size={18} className="animate-spin" />
+                                    <span>Sending...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Share2 size={18} />
+                                    <span>Share</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

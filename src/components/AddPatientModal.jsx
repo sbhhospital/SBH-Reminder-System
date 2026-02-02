@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Phone, Calendar, Image as ImageIcon, Save, Loader, UploadCloud } from 'lucide-react';
+import { X, User, Phone, Calendar, Image as ImageIcon, Save, Loader, UploadCloud, Users } from 'lucide-react';
 
 const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
@@ -8,6 +8,7 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
         fatherName: '',
         motherName: '',
         dob: '',
+        baby: 'Boy', // Default value
         mobile: ''
     });
     const [selectedFile, setSelectedFile] = useState(null);
@@ -103,15 +104,16 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                 formattedDob = `${dobDay}/${dobMonth}/${dobYear}`;
             }
 
-            // Format: [Timestamp, Father, Mother, DOB, Mobile, Image, Sent]
+            // Format: [Timestamp, Father, Mother, DOB, Baby, Mobile, Image, Sent]
             const rowData = [
                 timestamp,          // Column A: Timestamp
-                formData.fatherName,
-                formData.motherName,
+                formData.fatherName, // Column B
+                formData.motherName, // Column C
                 formattedDob,       // Column D: Formatted DOB
-                formData.mobile,
-                imageUrl,
-                'No' // Default value for Column G
+                formData.baby,      // Column E: Baby
+                formData.mobile,    // Column F
+                imageUrl,           // Column G
+                'No'                // Column H: Sent (Default)
             ];
 
             const saveBody = new URLSearchParams();
@@ -237,6 +239,21 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                                 placeholder="Enter mobile number"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                                <Users size={16} className="text-emerald-500" />
+                                Baby
+                            </label>
+                            <select
+                                name="baby"
+                                value={formData.baby}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all bg-white"
+                            >
+                                <option value="Boy">Boy</option>
+                                <option value="Girl">Girl</option>
+                            </select>
                         </div>
                     </div>
 
