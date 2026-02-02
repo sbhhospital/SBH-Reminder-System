@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Search, Loader, Users, AlertCircle, Plus } from 'lucide-react';
+import { Share2, Search, Loader, Users, AlertCircle, Plus, X } from 'lucide-react';
 import ShareModal from '../components/ShareModal';
 import AddPatientModal from '../components/AddPatientModal';
 
@@ -9,6 +9,7 @@ const PatientDataPage = () => {
     const [error, setError] = useState(null);
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [viewImage, setViewImage] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
     const APPSCRIPT_URL = import.meta.env.VITE_APPSCRIPT_URL;
@@ -178,7 +179,8 @@ const PatientDataPage = () => {
                                                         <img
                                                             src={patient.image}
                                                             alt="Patient"
-                                                            className="w-15 h-15 rounded-lg object-cover border border-slate-100 shadow-sm"
+                                                            className="w-15 h-15 rounded-lg object-cover border border-slate-100 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                                                            onClick={() => setViewImage(patient.image)}
                                                             onError={(e) => { e.target.style.display = 'none'; }}
                                                         />
                                                     ) : (
@@ -230,6 +232,27 @@ const PatientDataPage = () => {
                     onClose={() => setIsAddModalOpen(false)}
                     onSuccess={fetchData}
                 />
+
+                {/* Full Image View Modal */}
+                {viewImage && (
+                    <div
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in"
+                        onClick={() => setViewImage(null)}
+                    >
+                        <button
+                            onClick={() => setViewImage(null)}
+                            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                        >
+                            <X size={24} />
+                        </button>
+                        <img
+                            src={viewImage.replace('&sz=w400', '&sz=s0')}
+                            alt="Full View"
+                            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );
