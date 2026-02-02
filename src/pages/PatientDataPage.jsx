@@ -178,7 +178,7 @@ const PatientDataPage = () => {
                                                         <img
                                                             src={patient.image}
                                                             alt="Patient"
-                                                            className="w-10 h-10 rounded-lg object-cover border border-slate-100 shadow-sm"
+                                                            className="w-15 h-15 rounded-lg object-cover border border-slate-100 shadow-sm"
                                                             onError={(e) => { e.target.style.display = 'none'; }}
                                                         />
                                                     ) : (
