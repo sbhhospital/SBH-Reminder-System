@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Phone, Calendar, Image as ImageIcon, Save, Loader, UploadCloud, Users } from 'lucide-react';
+import { X, User, Phone, Calendar, Save, Loader, Users } from 'lucide-react';
 
 const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
@@ -11,36 +11,12 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
         baby: 'Boy', // Default value
         mobile: ''
     });
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState('');
 
     if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                alert("File size must be less than 5MB");
-                return;
-            }
-            setSelectedFile(file);
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-        }
-    };
-
-    const convertToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
     };
 
     const handleSubmit = async (e) => {
@@ -53,32 +29,6 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
             const FOLDER_ID = import.meta.env.VITE_GOOGLE_DRIVE_FOLDER_ID;
 
             let imageUrl = '';
-
-            // 1. Upload Image if selected
-            if (selectedFile) {
-                setLoadingText('Uploading Image...');
-                const base64Data = await convertToBase64(selectedFile);
-
-                const uploadBody = new URLSearchParams();
-                uploadBody.append('action', 'uploadFile');
-                uploadBody.append('base64Data', base64Data);
-                uploadBody.append('fileName', selectedFile.name);
-                uploadBody.append('mimeType', selectedFile.type);
-                uploadBody.append('folderId', FOLDER_ID);
-
-                const uploadResponse = await fetch(APPSCRIPT_URL, {
-                    method: 'POST',
-                    body: uploadBody
-                });
-
-                const uploadResult = await uploadResponse.json();
-
-                if (!uploadResult.success) {
-                    throw new Error(uploadResult.error || "Image upload failed");
-                }
-
-                imageUrl = uploadResult.fileUrl;
-            }
 
             // 2. Save Patient Data
             setLoadingText('Saving Record...');
@@ -153,8 +103,6 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
             dob: '',
             mobile: ''
         });
-        setSelectedFile(null);
-        setPreviewUrl('');
         onClose();
     };
 
@@ -257,42 +205,6 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                            <ImageIcon size={16} className="text-emerald-500" />
-                            Patient Image
-                        </label>
-
-                        <div className="border-2 border-dashed border-emerald-100 rounded-xl p-4 text-center hover:bg-emerald-50/50 transition-colors relative">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-
-                            {previewUrl ? (
-                                <div className="flex items-center gap-3">
-                                    <img src={previewUrl} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-slate-200" />
-                                    <div className="text-left">
-                                        <p className="text-sm font-medium text-slate-700 truncate max-w-[200px]">{selectedFile?.name}</p>
-                                        <p className="text-xs text-emerald-600">Click to change</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center gap-2 py-2">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                        <UploadCloud size={20} />
-                                    </div>
-                                    <p className="text-sm text-slate-500">
-                                        <span className="font-medium text-emerald-600">Click to upload</span> or drag and drop
-                                    </p>
-                                    <p className="text-xs text-slate-400">PNG, JPG up to 5MB</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
                     <div className="pt-4 flex justify-end gap-3">
                         <button
                             type="button"
@@ -319,9 +231,9 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
                             )}
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
+                </form >
+            </div >
+        </div >
     );
 };
 

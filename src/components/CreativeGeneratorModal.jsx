@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Upload, RefreshCw, Calendar, Clock, User, Type } from 'lucide-react';
-import babyBoyImg from '../../public/baby_boy.png';
-import babyGirlImg from '../../public/baby_girl.png';
+import { X, Download, Upload, Calendar, Clock, User, Type, Loader } from 'lucide-react';
+import babyBoyImg from '/baby_boy.png';
+import babyGirlImg from '/baby_girl.png';
 
-const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
+const CreativeGeneratorModal = ({ isOpen, onClose, initialData, onSuccess }) => {
     const [formData, setFormData] = useState({
         gender: 'boy',
         cast: '',
@@ -13,9 +13,9 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
 
     // Text Configuration State
     const [textConfig, setTextConfig] = useState({
-        cast: { x: 50, y: 40, size: 80, color: '#1E40AF' },
-        date: { x: 50, y: 60, size: 60, color: '#4B5563' },
-        photo: { x: 50, y: 50, size: 30, panX: 0, panY: 0, zoom: 100 }
+        cast: { x: 50, y: 22, size: 80, color: '#1E40AF' },
+        date: { x: 50, y: 63, size: 60, color: '#4B5563' },
+        photo: { x: 50, y: 41.5, size: 29, panX: 0, panY: 0, zoom: 100 }
     });
 
     const [activeTab, setActiveTab] = useState('cast'); // 'cast', 'date', or 'photo'
@@ -25,15 +25,41 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
     const [uploadedImage, setUploadedImage] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
-    // Initialize date and time with current values
+    // Initialize date and time with current values or patient data
     useEffect(() => {
         if (isOpen) {
             const now = new Date();
+
+            // Determine Gender
+            let initialGender = 'boy';
+            if (initialData?.baby) {
+                const babyLower = String(initialData.baby).toLowerCase();
+                if (babyLower.includes('girl')) initialGender = 'girl';
+            }
+
+            // Determine Date
+            let initialDate = now.toISOString().split('T')[0];
+            if (initialData?.rawDob) {
+                try {
+                    const dob = new Date(initialData.rawDob);
+                    if (!isNaN(dob.getTime())) {
+                        const year = dob.getFullYear();
+                        const month = String(dob.getMonth() + 1).padStart(2, '0');
+                        const day = String(dob.getDate()).padStart(2, '0');
+                        initialDate = `${year}-${month}-${day}`;
+                    }
+                } catch (e) {
+                    console.error("Error parsing DOB:", e);
+                }
+            }
+
             setFormData(prev => ({
                 ...prev,
+                gender: initialGender,
                 cast: initialData?.cast || '',
-                date: now.toISOString().split('T')[0],
+                date: initialDate,
                 time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
             }));
         }
@@ -197,9 +223,73 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
         link.click();
     };
 
-    const handleUpload = () => {
-        // Placeholder for upload functionality
-        alert("Upload feature would connect to backend here.");
+    const handleUpload = async () => {
+        if (!canvasRef.current || !initialData) return;
+
+        try {
+            setIsUploading(true);
+            const APPSCRIPT_URL = import.meta.env.VITE_APPSCRIPT_URL;
+            const FOLDER_ID = import.meta.env.VITE_GOOGLE_DRIVE_FOLDER_ID;
+
+            // 1. Get Base64 from Canvas
+            const base64Data = canvasRef.current.toDataURL('image/png');
+
+            // 2. Upload to Drive
+            const uploadBody = new URLSearchParams();
+            uploadBody.append('action', 'uploadFile');
+            uploadBody.append('base64Data', base64Data);
+            uploadBody.append('fileName', `creative_${initialData.father}_${Date.now()}.png`);
+            uploadBody.append('mimeType', 'image/png');
+            uploadBody.append('folderId', FOLDER_ID);
+
+            const uploadResponse = await fetch(APPSCRIPT_URL, {
+                method: 'POST',
+                body: uploadBody
+            });
+
+            const uploadResult = await uploadResponse.json();
+
+            if (!uploadResult.success) {
+                throw new Error(uploadResult.error || "Image upload failed");
+            }
+
+            const fileUrl = uploadResult.fileUrl;
+
+            // 3. Update Sheet (Column H = Index 8)
+            // Row calculation: Header (1) + Index (0-based) + 1 = Index + 2
+            const rowIndex = initialData.id + 2;
+
+            const updateBody = new URLSearchParams();
+            updateBody.append('action', 'updateCell');
+            updateBody.append('sheetName', 'Data');
+            updateBody.append('rowIndex', rowIndex);
+            updateBody.append('columnIndex', 8); // Column H
+            updateBody.append('value', fileUrl);
+
+            const updateResponse = await fetch(APPSCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: updateBody
+            });
+
+            const updateResult = await updateResponse.json();
+
+            if (updateResult.success) {
+                alert("Creative uploaded and record updated successfully!");
+                if (onSuccess) onSuccess();
+                onClose();
+            } else {
+                throw new Error(updateResult.error || "Failed to update record");
+            }
+
+        } catch (error) {
+            console.error("Upload Error:", error);
+            alert("Error: " + error.message);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleFileChange = (e) => {
@@ -227,9 +317,12 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
                 {/* Left Panel: Inputs */}
                 <div className="w-full md:w-1/3 p-6 bg-slate-50 border-r border-slate-100 flex flex-col overflow-y-auto">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-                            Creative Gen
-                        </h2>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-800">Creative Generator</h2>
+                            {initialData?.serialNo && (
+                                <p className="text-xs text-slate-500 font-medium">Serial No: {initialData.serialNo}</p>
+                            )}
+                        </div>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-slate-200 rounded-full transition-colors md:hidden"
@@ -271,7 +364,7 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                                 <User size={16} className="text-slate-400" />
-                                Name / Cast
+                                To
                             </label>
                             <input
                                 type="text"
@@ -490,15 +583,19 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData }) => {
                                 onClick={toggleGender}
                                 className="flex items-center justify-center gap-2 py-2.5 bg-white border(slate-200) hover:bg-slate-50 text-slate-700 rounded-xl font-medium transition-all border"
                             >
-                                <RefreshCw size={18} />
                                 Switch Theme
                             </button>
                             <button
                                 onClick={handleUpload}
-                                className="flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-200 transition-all"
+                                disabled={isUploading}
+                                className="flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-200 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                <Upload size={18} />
-                                Upload
+                                {isUploading ? (
+                                    <Loader size={18} className="animate-spin" />
+                                ) : (
+                                    <Upload size={18} />
+                                )}
+                                {isUploading ? 'Uploading...' : 'Upload'}
                             </button>
                         </div>
                     </div>

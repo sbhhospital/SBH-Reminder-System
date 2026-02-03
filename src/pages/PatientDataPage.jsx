@@ -81,6 +81,7 @@ const PatientDataPage = () => {
                     father: row[2],      // Index 2 - Column C
                     mother: row[3],      // Index 3 - Column D
                     dob: row[4] ? new Date(row[4]).toLocaleDateString() : 'N/A', // Index 4 - Column E
+                    rawDob: row[4], // Store raw date for Creative Generator
                     baby: row[5],    // Index 5 - Column F
                     mobile: row[6],    // Index 6 - Column G
                     image: getDisplayableImageUrl(row[7]), // Index 7 - Column H
@@ -307,19 +308,20 @@ const PatientDataPage = () => {
                     onSuccess={fetchData}
                 />
 
-                <CreativeGeneratorModal
-                    isOpen={isCreativeModalOpen}
-                    onClose={() => {
-                        setIsCreativeModalOpen(false);
-                        setSelectedCreativePatient(null);
-                    }}
-                    initialData={selectedCreativePatient ? {
-                        cast: selectedCreativePatient.baby || selectedCreativePatient.father,
-                        // We could also pass date if needed, but the generator usually sets 'now' or manual date.
-                        // Let's pass dob just in case we want to use it creatively? 
-                        // The current generator defaults date to 'now'. Let's stick to that unless requested.
-                    } : null}
-                />
+                {isCreativeModalOpen && (
+                    <CreativeGeneratorModal
+                        isOpen={isCreativeModalOpen}
+                        onClose={() => {
+                            setIsCreativeModalOpen(false);
+                            setSelectedCreativePatient(null);
+                        }}
+                        initialData={selectedCreativePatient ? {
+                            ...selectedCreativePatient,
+                            cast: selectedCreativePatient.baby || selectedCreativePatient.father,
+                        } : null}
+                        onSuccess={fetchData}
+                    />
+                )}
 
                 {/* Full Image View Modal */}
                 {viewImage && (
