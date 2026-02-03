@@ -57,11 +57,12 @@ const AddPatientModal = ({ isOpen, onClose, onSuccess }) => {
             // Format: [Timestamp, Father, Mother, DOB, Baby, Mobile, Image, Sent]
             const rowData = [
                 timestamp,          // Column A: Timestamp
-                formData.fatherName, // Column B
-                formData.motherName, // Column C
-                formattedDob,       // Column D: Formatted DOB
-                formData.baby,      // Column E: Baby
-                formData.mobile,    // Column F
+                "", // Column B: Folder ID
+                formData.fatherName, // Column C
+                formData.motherName, // Column D
+                formattedDob,       // Column E: Formatted DOB
+                formData.baby,      // Column F: Baby
+                formData.mobile,    // Column G: Mobile
                 imageUrl,           // Column G
                 'No'                // Column H: Sent (Default)
             ];

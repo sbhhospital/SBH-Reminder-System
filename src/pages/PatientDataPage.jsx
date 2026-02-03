@@ -112,7 +112,7 @@ const PatientDataPage = () => {
             params.append('action', 'updateCell');
             params.append('sheetName', 'Data');
             params.append('rowIndex', rowIndex);
-            params.append('columnIndex', 8); // Column H is index 8 (A=1...H=8)
+            params.append('columnIndex', 9); // Column H is index 8 (A=1...H=8)
             params.append('value', 'Yes');
 
             const response = await fetch(APPSCRIPT_URL, {
@@ -151,12 +151,7 @@ const PatientDataPage = () => {
                 {/* Header */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                            Patient Records
-                        </h1>
-                        <p className="text-slate-500 mt-1">
-                            View and manage patient information
-                        </p>
+                        <img src="/logo.png" alt="SBH Reminder System" className="h-16 w-auto object-contain" />
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">

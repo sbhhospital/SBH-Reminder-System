@@ -402,6 +402,7 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData, onSuccess }) => 
                                 name="time"
                                 value={formData.time}
                                 onChange={handleInputChange}
+                                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all outline-none"
                             />
                         </div>
 
@@ -431,7 +432,7 @@ const CreativeGeneratorModal = ({ isOpen, onClose, initialData, onSuccess }) => 
                                 className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'cast' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'
                                     }`}
                             >
-                                Name/Cast
+                                To
                             </button>
                             <button
                                 onClick={() => setActiveTab('date')}
