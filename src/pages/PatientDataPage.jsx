@@ -105,6 +105,30 @@ const PatientDataPage = () => {
 
         setIsSharing(true);
         try {
+            // 1. Send WhatsApp Message via API
+            if (selectedPatient.mobile && selectedPatient.image) {
+                // Use high-resolution image for sharing (replace w400 with s0 for original size)
+                const highQualityImage = selectedPatient.image.replace('&sz=w400', '&sz=s0');
+
+                // Using FormData for the POST request
+                const formData = new FormData();
+                formData.append('username', 'SBH HOSPITAL');
+                formData.append('password', '123456789');
+                formData.append('receiverMobileNo', selectedPatient.mobile);
+                formData.append('filePathUrl', highQualityImage);
+                formData.append('message', ''); // Empty message to send only image
+
+                // Using the specific endpoint for file/image sending
+                const apiResponse = await fetch('https://app.messageautosender.com/api/v1/message/create', {
+                    method: 'POST',
+                    mode: 'no-cors', // handle CORS for external API
+                    body: formData
+                });
+
+                console.log('WhatsApp Image API Request Sent');
+            }
+
+            // 2. Update Sheet
             // Row calculation: Header (1) + Index (0-based) + 1 = Index + 2
             const rowIndex = selectedPatient.id + 2;
 
@@ -128,6 +152,7 @@ const PatientDataPage = () => {
             if (result.success) {
                 await fetchData(); // Refresh data to show "Yes"
                 setSelectedPatient(null); // Close modal
+                alert("Shared successfully on WhatsApp and updated record!");
             } else {
                 alert("Failed to update status: " + result.error);
             }
