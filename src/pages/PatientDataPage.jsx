@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Share2, Search, Loader, Users, AlertCircle, Plus, X } from 'lucide-react';
 import ShareModal from '../components/ShareModal';
 import AddPatientModal from '../components/AddPatientModal';
+import CreativeGeneratorModal from '../components/CreativeGeneratorModal';
+import { Palette } from 'lucide-react';
 
 const PatientDataPage = () => {
     const [data, setData] = useState([]);
@@ -13,7 +15,16 @@ const PatientDataPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isSharing, setIsSharing] = useState(false);
 
+    // Creative Generator State
+    const [isCreativeModalOpen, setIsCreativeModalOpen] = useState(false);
+    const [selectedCreativePatient, setSelectedCreativePatient] = useState(null);
+
     const APPSCRIPT_URL = import.meta.env.VITE_APPSCRIPT_URL;
+
+    const handleOpenCreative = (patient) => {
+        setSelectedCreativePatient(patient);
+        setIsCreativeModalOpen(true);
+    };
 
     const getDisplayableImageUrl = (url) => {
         if (!url) return null;
@@ -66,13 +77,14 @@ const PatientDataPage = () => {
 
                 const formattedData = rows.map((row, index) => ({
                     id: index,
-                    father: row[1],      // Index 1 - Column B
-                    mother: row[2],      // Index 2 - Column C
-                    dob: row[3] ? new Date(row[3]).toLocaleDateString() : 'N/A', // Index 3 - Column D
-                    baby: row[4],    // Index 4 - Column E
-                    mobile: row[5],    // Index 5 - Column F
-                    image: getDisplayableImageUrl(row[6]), // Index 6 - Column G
-                    sent: row[7],      // Index 7 - Column H
+                    serialNo: row[1],      // Index 1 - Column B
+                    father: row[2],      // Index 2 - Column C
+                    mother: row[3],      // Index 3 - Column D
+                    dob: row[4] ? new Date(row[4]).toLocaleDateString() : 'N/A', // Index 4 - Column E
+                    baby: row[5],    // Index 5 - Column F
+                    mobile: row[6],    // Index 6 - Column G
+                    image: getDisplayableImageUrl(row[7]), // Index 7 - Column H
+                    sent: row[8],      // Index 7 - Column H
                 })).filter(item => item.father);
 
                 setData(formattedData);
@@ -189,6 +201,7 @@ const PatientDataPage = () => {
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="bg-emerald-50/50 border-b border-emerald-100">
+                                        <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Serial No.</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Father Name</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Mother Name</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Date of Birth</th>
@@ -196,6 +209,7 @@ const PatientDataPage = () => {
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Mobile Number</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Image</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider">Sent</th>
+                                        <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider text-center">Creative</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-emerald-800 uppercase tracking-wider text-center">Actions</th>
                                     </tr>
                                 </thead>
@@ -203,6 +217,9 @@ const PatientDataPage = () => {
                                     {filteredData.length > 0 ? (
                                         filteredData.map((patient, idx) => (
                                             <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="font-medium text-slate-700">{patient.serialNo}</span>
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-medium text-slate-700">{patient.father}</span>
@@ -239,6 +256,15 @@ const PatientDataPage = () => {
                                                     ) : (
                                                         <span className="text-xs text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full font-medium">No</span>
                                                     )}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <button
+                                                        onClick={() => handleOpenCreative(patient)}
+                                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-100 rounded-lg text-sm font-medium transition-colors border border-violet-100 hover:border-violet-200"
+                                                    >
+                                                        <Palette size={16} />
+                                                        Creative
+                                                    </button>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <button
@@ -279,6 +305,20 @@ const PatientDataPage = () => {
                     isOpen={isAddModalOpen}
                     onClose={() => setIsAddModalOpen(false)}
                     onSuccess={fetchData}
+                />
+
+                <CreativeGeneratorModal
+                    isOpen={isCreativeModalOpen}
+                    onClose={() => {
+                        setIsCreativeModalOpen(false);
+                        setSelectedCreativePatient(null);
+                    }}
+                    initialData={selectedCreativePatient ? {
+                        cast: selectedCreativePatient.baby || selectedCreativePatient.father,
+                        // We could also pass date if needed, but the generator usually sets 'now' or manual date.
+                        // Let's pass dob just in case we want to use it creatively? 
+                        // The current generator defaults date to 'now'. Let's stick to that unless requested.
+                    } : null}
                 />
 
                 {/* Full Image View Modal */}
